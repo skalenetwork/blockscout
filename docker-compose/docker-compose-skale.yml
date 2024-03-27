@@ -38,7 +38,7 @@ services:
       ETHEREUM_JSONRPC_VARIANT: "geth"
       ETHEREUM_JSONRPC_HTTP_URL: ${ENDPOINT}
       ETHEREUM_JSONRPC_WS_URL: ${WS_ENDPOINT}
-      DATABASE_URL: postgresql://postgres:@host.docker.internal:${DB_PORT}/blockscout?ssl=false
+      DATABASE_URL: postgresql://postgres:@database:5432/blockscout?ssl=false
       FIRST_BLOCK: ${FIRST_BLOCK:-0}
       NETWORK: "SKALE"
       INDEXER_RECEIPTS_BATCH_SIZE: 128
