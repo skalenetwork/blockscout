@@ -21,7 +21,7 @@ services:
     environment:
         POSTGRES_DB: 'blockscout'
         POSTGRES_USER: 'blockscout'
-        POSTGRES_PASSWORD: 'ceWb1MeLBEeOIfk65gU8EjF8'
+        POSTGRES_PASSWORD: ${DB_PASSWORD:-ceWb1MeLBEeOIfk65gU8EjF8}
     ports:
       - target: 5432
         published: ${DB_PORT:-7432}
@@ -33,3 +33,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "1"
