@@ -8,6 +8,8 @@
 /doc
 /*.ez
 /logs
+data/*
+!data/.gitkeep
 
 # mix dialyzer artifacts
 /priv/plts
@@ -47,13 +49,6 @@ dump.rdb
 
 # mix phx.gen.cert self-signed certs for dev
 /apps/block_scout_web/priv/cert
-
-/docker-compose/services/blockscout-db-data
-/docker-compose/services/stats-db-data
-/docker-compose/services/redis-data
-/docker-compose/services/logs
-/docker-compose/tmp
-/docker-compose/services/blockscout-data
 
 .idea/
 *.iml
