@@ -14,21 +14,30 @@ defmodule Explorer.Chain.Arbitrum.BatchTransaction do
   alias Explorer.Chain.Arbitrum.L1Batch
   alias Explorer.Chain.{Hash, Transaction}
 
-  @required_attrs ~w(batch_number tx_hash)a
+  @required_attrs ~w(batch_number transaction_hash)a
 
-  @type t :: %__MODULE__{
-          batch_number: non_neg_integer(),
-          batch: %Ecto.Association.NotLoaded{} | L1Batch.t() | nil,
-          tx_hash: Hash.t(),
-          l2_transaction: %Ecto.Association.NotLoaded{} | Transaction.t() | nil
+  @typedoc """
+  Descriptor of the rollup transaction included in an Arbitrum batch:
+    * `batch_number` - The number of the Arbitrum batch.
+    * `transaction_hash` - The hash of the rollup transaction.
+  """
+  @type to_import :: %{
+          :batch_number => non_neg_integer(),
+          :transaction_hash => binary()
         }
 
+  @typedoc """
+    * `transaction_hash` - The hash of the rollup transaction.
+    * `l2_transaction` - An instance of `Explorer.Chain.Transaction` referenced by `transaction_hash`.
+    * `batch_number` - The number of the Arbitrum batch.
+    * `batch` - An instance of `Explorer.Chain.Arbitrum.L1Batch` referenced by `batch_number`.
+  """
   @primary_key false
-  schema "arbitrum_batch_l2_transactions" do
+  typed_schema "arbitrum_batch_l2_transactions" do
     belongs_to(:batch, L1Batch, foreign_key: :batch_number, references: :number, type: :integer)
 
     belongs_to(:l2_transaction, Transaction,
-      foreign_key: :tx_hash,
+      foreign_key: :transaction_hash,
       primary_key: true,
       references: :hash,
       type: Hash.Full
@@ -47,6 +56,6 @@ defmodule Explorer.Chain.Arbitrum.BatchTransaction do
     |> validate_required(@required_attrs)
     |> foreign_key_constraint(:batch_number)
     |> foreign_key_constraint(:block_hash)
-    |> unique_constraint(:tx_hash)
+    |> unique_constraint(:transaction_hash)
   end
 end

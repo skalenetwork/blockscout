@@ -2,9 +2,9 @@ version: '3.9'
 
 services:
   db-init:
-    image: postgres:15
+    image: postgres:17
     volumes:
-      - ${SCHAIN_DATA_DIR:-./blockscout-data/${SCHAIN_NAME}}/blockscout-db-data:/var/lib/postgresql/data
+      - ${SCHAIN_DATA_DIR:-../../data/${SCHAIN_NAME}}/blockscout-db-data:/var/lib/postgresql/data
     entrypoint:
       - sh
       - -c
@@ -12,7 +12,7 @@ services:
         chown -R 2000:2000 /var/lib/postgresql/data
 
   db:
-    image: postgres:15
+    image: postgres:17
     user: 2000:2000
     shm_size: 256m
     restart: always
@@ -26,7 +26,7 @@ services:
       - target: 5432
         published: ${DB_PORT:-7432}
     volumes:
-      - ${SCHAIN_DATA_DIR:-./blockscout-data/${SCHAIN_NAME}}/blockscout-db-data:/var/lib/postgresql/data
+      - ${SCHAIN_DATA_DIR:-../../data/${SCHAIN_NAME}}/blockscout-db-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U blockscout -d blockscout"]
       interval: 10s
