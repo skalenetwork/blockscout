@@ -24,14 +24,7 @@ services:
       context: ..
       dockerfile: ./docker/Dockerfile
       args:
-        CACHE_EXCHANGE_RATES_PERIOD: ""
-        API_V1_READ_METHODS_DISABLED: "false"
-        DISABLE_WEBAPP: "false"
-        API_V1_WRITE_METHODS_DISABLED: "false"
-        CACHE_TOTAL_GAS_USAGE_COUNTER_ENABLED: ""
-        CACHE_ADDRESS_WITH_BALANCES_UPDATE_INTERVAL: ""
-        ADMIN_PANEL_ENABLED: ""
-        RELEASE_VERSION: 6.7.2
+        RELEASE_VERSION: 6.10.2
     links:
       - db:database
     environment:
@@ -63,6 +56,9 @@ services:
         RE_CAPTCHA_CLIENT_KEY: "6LcUCysqAAAAAB62o5u8RnB_FzMELuEnxPPst_ET"
         RE_CAPTCHA_SECRET_KEY: ${RE_CAPTCHA_SECRET_KEY}
         DATABASE_URL: "postgresql://blockscout:${DB_PASSWORD:-ceWb1MeLBEeOIfk65gU8EjF8}@db:5432/blockscout"
+        INDEXER_DISABLE_INTERNAL_TRANSACTIONS_FETCHER: "${INDEXER_DISABLE_INTERNAL_TRANSACTIONS_FETCHER:-true}"
+        NFT_MEDIA_HANDLER_ENABLED: "false"
+        NFT_MEDIA_HANDLER_REMOTE_DISPATCHER_NODE_MODE_ENABLED: "false"
 
   frontend:
     depends_on:
