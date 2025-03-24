@@ -24,14 +24,19 @@ defmodule Explorer.Migrator.SanitizeIncorrectWETHTokenTransfers do
 
   @impl true
   def init(_) do
+    {:ok, %{}, {:continue, :ok}}
+  end
+
+  @impl true
+  def handle_continue(:ok, state) do
     case MigrationStatus.get_status(@migration_name) do
       "completed" ->
-        :ignore
+        {:stop, :normal, state}
 
       _ ->
         MigrationStatus.set_status(@migration_name, "started")
-        schedule_batch_migration()
-        {:ok, %{step: :delete_duplicates}}
+        schedule_batch_migration(0)
+        {:noreply, %{step: :delete_duplicates}}
     end
   end
 
@@ -133,8 +138,8 @@ defmodule Explorer.Migrator.SanitizeIncorrectWETHTokenTransfers do
     |> Repo.query!([], timeout: :infinity)
   end
 
-  defp schedule_batch_migration do
-    Process.send(self(), :migrate_batch, [])
+  defp schedule_batch_migration(timeout \\ nil) do
+    Process.send_after(self(), :migrate_batch, timeout || Application.get_env(:explorer, __MODULE__)[:timeout])
   end
 
   defp batch_size do

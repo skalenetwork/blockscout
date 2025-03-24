@@ -1,0 +1,32 @@
+FROM debian:12
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN groupadd -g 2000 blockscout && \
+    useradd -m -u 2000 -g 2000 blockscout
+
+RUN apt-get update && apt-get install -y \
+    locales-all \
+    wget gnupg lsb-release  # plus anything else you need
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+ENV LANGUAGE=en_US:en
+
+RUN echo "deb [arch=amd64] http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" \
+   > /etc/apt/sources.list.d/pgdg.list
+RUN wget -qO - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add -
+RUN apt-get update \
+ && apt-get install -y \
+    postgresql-15 postgresql-client-15 \
+    postgresql-17 postgresql-client-17 \
+ && apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /var/run/postgresql && \
+   chown -R blockscout:blockscout /var/run/postgresql && \
+   chmod 775 /var/run/postgresql
+
+COPY pg_upgrade_15_to_17.sh /usr/local/bin/pg_upgrade_15_to_17.sh
+RUN chmod +x /usr/local/bin/pg_upgrade_15_to_17.sh
+ENTRYPOINT ["/usr/local/bin/pg_upgrade_15_to_17.sh"]
