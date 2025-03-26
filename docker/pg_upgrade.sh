@@ -2,7 +2,6 @@
 
 : "${SCHAIN_NAME?Set SCHAIN_NAME}"
 : "${DATA_DIR?Set DATA_DIR}"
-: "${PGUSER?Set PGUSER}"
 : "${PGPASSWORD?Set PGPASSWORD}"
 
 OLD_PG_DATA_PATH=${DATA_DIR}/${SCHAIN_NAME}_old/blockscout-db-data/
@@ -17,6 +16,6 @@ docker build -t pg-upgrade -f docker/Dockerfile.pg-upgrade docker/
 docker run --rm \
   -v ${OLD_PG_DATA_PATH}:/var/lib/postgresql/15/data \
   -v ${NEW_PG_DATA_PATH}:/var/lib/postgresql/17/data \
-  -e PGUSER=${PGUSER} \
+  -e PGUSER=blockscout \
   -e PGPASSWORD=${PGPASSWORD} \
   pg-upgrade
