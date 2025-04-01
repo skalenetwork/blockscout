@@ -2,9 +2,9 @@ version: '3.9'
 
 services:
   stats-db-init:
-    image: postgres:15
+    image: postgres:17
     volumes:
-      - ${SCHAIN_DATA_DIR:-./blockscout-data/${SCHAIN_NAME}}/stats-db-data:/var/lib/postgresql/data
+      - ${SCHAIN_DATA_DIR:-../../data/${SCHAIN_NAME}}/stats-db-data:/var/lib/postgresql/data
 
     entrypoint:
       - sh
@@ -13,7 +13,7 @@ services:
         chown -R 2000:2000 /var/lib/postgresql/data
 
   stats-db:
-    image: postgres:15
+    image: postgres:17
     user: 2000:2000
     shm_size: 256m
     restart: always
@@ -27,7 +27,7 @@ services:
       - target: 5432
         published: ${STATS_DB_PORT:-7433}
     volumes:
-      - ${SCHAIN_DATA_DIR:-./blockscout-data/${SCHAIN_NAME}}/stats-db-data:/var/lib/postgresql/data
+      - ${SCHAIN_DATA_DIR:-../../data/${SCHAIN_NAME}}/stats-db-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U stats -d stats"]
       interval: 10s
@@ -36,7 +36,7 @@ services:
       start_period: 10s
 
   stats:
-    image: ghcr.io/blockscout/stats:${STATS_DOCKER_TAG:-v1.5.2}
+    image: ghcr.io/blockscout/stats:${STATS_DOCKER_TAG:-v2.4.0}
     pull_policy: always
     platform: linux/amd64
     restart: always
@@ -50,5 +50,13 @@ services:
       - STATS__BLOCKSCOUT_DB_URL=${STATS__BLOCKSCOUT_DB_URL:-postgresql://blockscout:${DB_PASSWORD:-ceWb1MeLBEeOIfk65gU8EjF8}@db:5432/blockscout}
       - STATS__CREATE_DATABASE=${STATS__CREATE_DATABASE:-true}
       - STATS__RUN_MIGRATIONS=${STATS__RUN_MIGRATIONS:-true}
-    volumes:
-      - ${BLOCKSCOUT_ASSETS_DIR:-../assets}:/app/config
+      - STATS__CONDITIONAL_START__BLOCKS_RATIO__ENABLED=false
+      - STATS__CONDITIONAL_START__INTERNAL_TRANSACTIONS_RATIO__ENABLED=false
+      - STATS__BLOCKSCOUT_API_URL=http://proxy
+      - STATS_CHARTS__TEMPLATE_VALUES__NATIVE_COIN_SYMBOL=sFUEL
+      - STATS_CHARTS__COUNTERS__AVERAGE_TXN_FEE_24H__ENABLED=false
+      - STATS_CHARTS__COUNTERS__TXNS_FEE_24H__ENABLED=false
+      - STATS_CHARTS__LINE_CHARTS__AVERAGE_TXN_FEE__ENABLED=false
+      - STATS_CHARTS__LINE_CHARTS__TXNS_FEE__ENABLED=false
+      - STATS_CHARTS__LINE_CHARTS__AVERAGE_BLOCK_REWARDS__ENABLED=false
+      - STATS_CHARTS__LINE_CHARTS__AVERAGE_GAS_PRICE__ENABLED=false
