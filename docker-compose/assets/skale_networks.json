@@ -90,12 +90,6 @@
       "icon":"https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/testnet/logos/lanky-ill-funny-testnet.png"
    },
    {
-      "title":"Razor Network",
-      "url":"https://turbulent-unique-scheat.explorer.mainnet.skalenodes.com/",
-      "group":"Mainnets",
-      "icon":"https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/mainnet/icons/turbulent-unique-scheat.svg"
-   },
-   {
       "title":"Solydaria",
       "url":"https://portly-passionate-sirius.explorer.mainnet.skalenodes.com/",
       "group":"Mainnets",
