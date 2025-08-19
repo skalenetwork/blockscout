@@ -9,8 +9,6 @@ services:
     volumes:
       - ${BLOCKSCOUT_PROXY_CONFIG_DIR:-../proxy}:/etc/nginx/templates
       - ${BLOCKSCOUT_PROXY_CERTS_PATH:-../certs}:/data/
-    environment:
-      HOST: ${HOST:-localhost}
     ports:
       - target: ${PROXY_BASE_PORT:-80}
         published: ${PROXY_PORT:-80}
