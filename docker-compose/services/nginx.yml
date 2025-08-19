@@ -7,7 +7,7 @@ services:
     extra_hosts:
       - 'host.docker.internal:host-gateway'
     volumes:
-      - ../proxy:/etc/nginx/templates
+      - ${BLOCKSCOUT_PROXY_CONFIG_DIR:-../proxy}:/etc/nginx/templates
       - ${BLOCKSCOUT_PROXY_CERTS_PATH:-../certs}:/data/
     environment:
       HOST: ${HOST:-localhost}
