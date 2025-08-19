@@ -46,7 +46,6 @@ server {
 
 server {
     listen       8080;
-    listen       8080 ssl;
     server_name  ${HOST};
 
     proxy_http_version 1.1;
