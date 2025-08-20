@@ -35,13 +35,12 @@ services:
         CHAIN_ID: ${CHAIN_ID}
         SUBNETWORK: ${SCHAIN_NAME}
         ETHEREUM_JSONRPC_VARIANT: "geth"
-        NETWORK: "SKALE"
+        NETWORK: "FAIR"
         FIRST_BLOCK: ${FIRST_BLOCK:-0}
         TRACE_FIRST_BLOCK: ${FIRST_BLOCK:-0}
         INDEXER_RECEIPTS_BATCH_SIZE: 100
         INDEXER_COIN_BALANCES_BATCH_SIZE: 100
         POOL_SIZE: 130
-        INDEXER_DISABLE_BLOCK_REWARD_FETCHER: "true"
         INDEXER_DISABLE_PENDING_TRANSACTIONS_FETCHER: "true"
         INDEXER_DISABLE_EMPTY_BLOCKS_SANITIZER: "true"
         ETHEREUM_JSONRPC_DISABLE_ARCHIVE_BALANCES: "true"
@@ -67,7 +66,7 @@ services:
     depends_on:
       - backend
     extends:
-      file: ./services/frontend-fair.yml
+      file: ./services/frontend.fair.yml
       service: frontend
 
   stats-db-init:
