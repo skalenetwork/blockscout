@@ -87,7 +87,7 @@ services:
       - stats-db
       - backend
     extends:
-      file: ./services/stats.yml
+      file: ./services/stats.fair.yml
       service: stats
 
   proxy:
