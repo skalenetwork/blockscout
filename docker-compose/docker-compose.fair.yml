@@ -34,7 +34,7 @@ services:
         JSON_RPC: ${ENDPOINT}
         CHAIN_ID: ${CHAIN_ID}
         SUBNETWORK: ${SCHAIN_NAME}
-        ETHEREUM_JSONRPC_VARIANT: "erigon"
+        ETHEREUM_JSONRPC_VARIANT: "geth"
         NETWORK: "FAIR"
         FIRST_BLOCK: ${FIRST_BLOCK:-0}
         TRACE_FIRST_BLOCK: ${FIRST_BLOCK:-0}
