@@ -480,7 +480,30 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
       if Decimal.compare(max_fee_per_gas.value, 0) == :eq do
         %Wei{value: Decimal.new(0)}
       else
-        Wei.mult(base_fee_per_gas, transaction.gas_used)
+        network = System.get_env("NETWORK")
+
+        if network == "FAIR" do
+          # FAIR network logic: use gas_price or max_fee_per_gas multiplied by fraction
+          fair_burnt_fee_fraction = Application.get_env(:explorer, :fair_burnt_fee_fraction, 0.5)
+
+          # Use gas_price if available, otherwise use max_fee_per_gas
+          effective_gas_price =
+            if transaction.gas_price do
+              transaction.gas_price
+            else
+              max_fee_per_gas
+            end
+
+          result = effective_gas_price
+          |> Wei.mult(transaction.gas_used)
+          |> Wei.mult(Decimal.from_float(fair_burnt_fee_fraction))
+
+          # Round to integer wei
+          %Wei{value: Decimal.round(result.value, 0)}
+        else
+          # Original EIP-1559 calculation for non-FAIR networks
+          Wei.mult(base_fee_per_gas, transaction.gas_used)
+        end
       end
     else
       nil
