@@ -262,7 +262,8 @@ config :explorer,
   base_fee_max_change_denominator: ConfigHelper.parse_integer_env_var("EIP_1559_BASE_FEE_MAX_CHANGE_DENOMINATOR", 8),
   csv_export_limit: ConfigHelper.parse_integer_env_var("CSV_EXPORT_LIMIT", 10_000),
   shrink_internal_transactions_enabled: ConfigHelper.parse_bool_env_var("SHRINK_INTERNAL_TRANSACTIONS_ENABLED"),
-  replica_max_lag: ConfigHelper.parse_time_env_var("REPLICA_MAX_LAG", "5m")
+  replica_max_lag: ConfigHelper.parse_time_env_var("REPLICA_MAX_LAG", "5m"),
+  fair_burnt_fee_fraction: ConfigHelper.parse_float_env_var("FAIR_BURNT_FEE_FRACTION", "0.5")
 
 config :explorer, :proxy,
   caching_implementation_data_enabled: true,
