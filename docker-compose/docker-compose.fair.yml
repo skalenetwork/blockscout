@@ -62,6 +62,7 @@ services:
         NFT_MEDIA_HANDLER_REMOTE_DISPATCHER_NODE_MODE_ENABLED: "false"
         NOVES_FI_CHAIN_NAME: ${NOVES_FI_CHAIN_NAME}
         NOVES_FI_API_TOKEN: ${NOVES_API_KEY}
+        BURNT_FEE_FRACTION: "${BURNT_FEE_FRACTION:-0.5}"
 
   frontend:
     depends_on:
