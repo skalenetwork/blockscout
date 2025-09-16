@@ -30,12 +30,6 @@
       "icon":"https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/mainnet/icons/affectionate-immediate-pollux.svg"
    },
    {
-      "title":"Curio DAO",
-      "url":"https://fit-betelgeuse.explorer.mainnet.skalenodes.com/",
-      "group":"Mainnets",
-      "icon":"https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/mainnet/logos/fit-betelgeuse.png"
-   },
-   {
       "title":"DEXGAME",
       "url":"https://round-hasty-alsafi.explorer.mainnet.skalenodes.com/",
       "group":"Mainnets",
@@ -70,12 +64,6 @@
       "url":"https://wan-red-ain.explorer.mainnet.skalenodes.com/",
       "group":"Mainnets",
       "icon":"https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/mainnet/icons/wan-red-ain.svg"
-   },
-   {
-      "title":"Ivy Cash",
-      "url":"https://plain-rotanev.explorer.mainnet.skalenodes.com/",
-      "group":"Mainnets",
-      "icon":"https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/mainnet/logos/plain-rotanev.png"
    },
    {
       "title":"Nebula Gaming Hub",
