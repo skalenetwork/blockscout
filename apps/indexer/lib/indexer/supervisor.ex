@@ -289,7 +289,8 @@ defmodule Indexer.Supervisor do
   @variants_with_implemented_fetch_beneficiaries [
     EthereumJSONRPC.Besu,
     EthereumJSONRPC.Erigon,
-    EthereumJSONRPC.Nethermind
+    EthereumJSONRPC.Nethermind,
+    EthereumJSONRPC.Geth
   ]
 
   defp maybe_add_block_reward_fetcher(
