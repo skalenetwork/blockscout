@@ -30,12 +30,6 @@
       "icon":"https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/mainnet/icons/affectionate-immediate-pollux.svg"
    },
    {
-      "title":"Curio DAO",
-      "url":"https://fit-betelgeuse.explorer.mainnet.skalenodes.com/",
-      "group":"Mainnets",
-      "icon":"https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/mainnet/logos/fit-betelgeuse.png"
-   },
-   {
       "title":"DEXGAME",
       "url":"https://round-hasty-alsafi.explorer.mainnet.skalenodes.com/",
       "group":"Mainnets",
@@ -72,12 +66,6 @@
       "icon":"https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/mainnet/icons/wan-red-ain.svg"
    },
    {
-      "title":"Ivy Cash",
-      "url":"https://plain-rotanev.explorer.mainnet.skalenodes.com/",
-      "group":"Mainnets",
-      "icon":"https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/mainnet/logos/plain-rotanev.png"
-   },
-   {
       "title":"Nebula Gaming Hub",
       "url":"https://green-giddy-denebola.explorer.mainnet.skalenodes.com/",
       "group":"Mainnets",
@@ -88,12 +76,6 @@
       "url":"https://lanky-ill-funny-testnet.explorer.testnet.skalenodes.com/",
       "group":"Testnets",
       "icon":"https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/testnet/logos/lanky-ill-funny-testnet.png"
-   },
-   {
-      "title":"Razor Network",
-      "url":"https://turbulent-unique-scheat.explorer.mainnet.skalenodes.com/",
-      "group":"Mainnets",
-      "icon":"https://raw.githubusercontent.com/skalenetwork/skale-network/master/metadata/mainnet/icons/turbulent-unique-scheat.svg"
    },
    {
       "title":"Solydaria",

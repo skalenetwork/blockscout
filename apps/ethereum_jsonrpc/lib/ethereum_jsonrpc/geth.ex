@@ -7,18 +7,71 @@ defmodule EthereumJSONRPC.Geth do
 
   import EthereumJSONRPC, only: [id_to_params: 1, integer_to_quantity: 1, json_rpc: 2, request: 1]
 
-  alias EthereumJSONRPC.{FetchedBalance, FetchedCode, PendingTransaction, Utility.CommonHelper}
+  alias EthereumJSONRPC.{FetchedBalance, FetchedBeneficiaries, FetchedCode, PendingTransaction, Utility.CommonHelper}
   alias EthereumJSONRPC.Geth.{Calls, PolygonTracer, Tracer}
 
   @behaviour EthereumJSONRPC.Variant
 
   @doc """
-  Block reward contract beneficiary fetching is not supported currently for Geth.
-
-  To signal to the caller that fetching is not supported, `:ignore` is returned.
+  Block reward contract beneficiary fetching for FAIR.
   """
   @impl EthereumJSONRPC.Variant
-  def fetch_beneficiaries(_block_range, _json_rpc_named_arguments), do: :ignore
+  def fetch_beneficiaries(block_numbers, json_rpc_named_arguments) when is_list(block_numbers) do
+    if is_fair_chain?(json_rpc_named_arguments) do
+      fetch_fair_beneficiaries(block_numbers, json_rpc_named_arguments)
+    else
+      :ignore
+    end
+  end
+
+  defp is_fair_chain?(_json_rpc_named_arguments) do
+    # Check if the NETWORK environment variable indicates FAIR network
+    network = System.get_env("NETWORK", "")
+    String.upcase(network) == "FAIR"
+  end
+
+  # Fetch beneficiaries for FAIR using block data
+  defp fetch_fair_beneficiaries(block_numbers, json_rpc_named_arguments) do
+    requests =
+      block_numbers
+      |> Enum.with_index()
+      |> Enum.map(fn {block_number, id} ->
+        EthereumJSONRPC.request(%{
+          id: id,
+          method: "eth_getBlockByNumber",
+          params: [EthereumJSONRPC.integer_to_quantity(block_number), false]
+        })
+      end)
+
+    case EthereumJSONRPC.json_rpc(requests, json_rpc_named_arguments) do
+      {:ok, responses} ->
+        params_set =
+          responses
+          |> Enum.map(fn %{id: id, result: block} when is_map(block) ->
+            block_number = Enum.at(block_numbers, id)
+            miner = Map.get(block, "miner") || Map.get(block, "author")
+
+            if miner do
+              %{
+                address_hash: miner,
+                address_type: :validator,
+                block_hash: Map.get(block, "hash"),
+                block_number: block_number,
+                reward: "0x0"
+              }
+            else
+              nil
+            end
+          end)
+          |> Enum.reject(&is_nil/1)
+          |> MapSet.new()
+
+        {:ok, %EthereumJSONRPC.FetchedBeneficiaries{params_set: params_set, errors: []}}
+
+      {:error, error} = error_result ->
+        error_result
+    end
+  end
 
   @doc """
   Fetches the `t:Explorer.Chain.InternalTransaction.changeset/2` params.

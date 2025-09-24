@@ -382,16 +382,47 @@ defmodule Explorer.Chain.Block do
   """
   @spec burnt_fees(list(), Decimal.t() | nil) :: Decimal.t()
   def burnt_fees(transactions, base_fee_per_gas) do
-    if is_nil(base_fee_per_gas) do
-      Decimal.new(0)
-    else
+    network = System.get_env("NETWORK")
+
+    if network == "FAIR" do
+      fair_burnt_fee_fraction = Application.get_env(:explorer, :fair_burnt_fee_fraction, 0.5)
+
       transactions
-      |> Enum.reduce(Decimal.new(0), fn %{gas_used: gas_used}, acc ->
-        gas_used
-        |> Decimal.new()
-        |> Decimal.add(acc)
+      |> Enum.reduce(Decimal.new(0), fn transaction, acc ->
+        gas_used = Decimal.new(transaction.gas_used)
+
+        # Use gas_price if available, otherwise use max_fee_per_gas
+        effective_gas_price =
+          if transaction.gas_price do
+            gas_price_to_decimal(transaction.gas_price)
+          else
+            gas_price_to_decimal(transaction.max_fee_per_gas)
+          end
+
+        if effective_gas_price do
+          transaction_burnt_fee = gas_used
+          |> Decimal.mult(effective_gas_price)
+          |> Decimal.mult(Decimal.from_float(fair_burnt_fee_fraction))
+          |> Decimal.round(0)
+
+          Decimal.add(transaction_burnt_fee, acc)
+        else
+          acc
+        end
       end)
-      |> Decimal.mult(gas_price_to_decimal(base_fee_per_gas))
+    else
+      # Original calculation for non-FAIR networks
+      if is_nil(base_fee_per_gas) do
+        Decimal.new(0)
+      else
+        transactions
+        |> Enum.reduce(Decimal.new(0), fn %{gas_used: gas_used}, acc ->
+          gas_used
+          |> Decimal.new()
+          |> Decimal.add(acc)
+        end)
+        |> Decimal.mult(gas_price_to_decimal(base_fee_per_gas))
+      end
     end
   end
 
