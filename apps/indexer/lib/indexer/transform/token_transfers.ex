@@ -49,15 +49,21 @@ defmodule Indexer.Transform.TokenTransfers do
       end)
       |> Enum.reduce(initial_acc, &do_parse(&1, &2, :erc404))
 
+    confidential_token_transfers =
+      logs
+      |> Enum.filter(&(&1.first_topic == TokenTransfer.confidential_transfer_signature()))
+      |> Enum.reduce(initial_acc, &do_parse(&1, &2, :confidential))
+
     rough_tokens =
       erc404_token_transfers.tokens ++
         erc1155_token_transfers.tokens ++
-        erc20_and_erc721_token_transfers.tokens ++ weth_transfers.tokens
+        erc20_and_erc721_token_transfers.tokens ++ weth_transfers.tokens ++ confidential_token_transfers.tokens
 
     rough_token_transfers =
       erc404_token_transfers.token_transfers ++
         erc1155_token_transfers.token_transfers ++
-        erc20_and_erc721_token_transfers.token_transfers ++ weth_transfers.token_transfers
+        erc20_and_erc721_token_transfers.token_transfers ++
+        weth_transfers.token_transfers ++ confidential_token_transfers.token_transfers
 
     tokens = sanitize_token_types(rough_tokens, rough_token_transfers)
     token_transfers = sanitize_weth_transfers(tokens, rough_token_transfers, weth_transfers.token_transfers)
@@ -184,6 +190,7 @@ defmodule Indexer.Transform.TokenTransfers do
       case type do
         :erc1155 -> parse_erc1155_params(log)
         :erc404 -> parse_erc404_params(log)
+        :confidential -> parse_confidential_params(log)
         _ -> parse_params(log)
       end
 
@@ -475,6 +482,34 @@ defmodule Indexer.Transform.TokenTransfers do
 
       {token, token_transfer}
     end
+  end
+
+  @confidential_magic_value 113_410_528_010_044_099_573_606_208_508_173_194_000_562_226_506_730_814_324_198_640_008_715_487_293_689
+
+  defp parse_confidential_params(log) do
+    # Topic 1: from, Topic 2: to
+    from_address_hash = truncate_address_hash(log.second_topic)
+    to_address_hash = truncate_address_hash(log.third_topic)
+
+    token_transfer = %{
+      amount: @confidential_magic_value,
+      block_number: log.block_number,
+      block_hash: log.block_hash,
+      log_index: log.index,
+      from_address_hash: from_address_hash,
+      to_address_hash: to_address_hash,
+      token_contract_address_hash: log.address_hash,
+      transaction_hash: log.transaction_hash,
+      token_ids: nil,
+      token_type: "ERC-20"
+    }
+
+    token = %{
+      contract_address_hash: log.address_hash,
+      type: "ERC-20"
+    }
+
+    {token, token_transfer}
   end
 
   def filter_tokens_for_supply_update(token_transfers) do
