@@ -109,8 +109,6 @@ defmodule Indexer.TokenBalances do
     |> Enum.sort_by(&{&1.token_contract_address_hash, &1.token_id, &1.address_hash})
   end
 
-  @confidential_magic_value 113_410_528_010_044_099_573_606_208_508_173_194_000_562_226_506_730_814_324_198_640_008_715_487_293_689
-
   defp set_token_balance_value({:ok, balance}, token_balance) do
     Map.merge(token_balance, %{value: balance, value_fetched_at: DateTime.utc_now(), error: nil})
   end
@@ -121,7 +119,7 @@ defmodule Indexer.TokenBalances do
       (is_map(error_message) and Map.get(error_message, "data") && String.contains?(String.downcase(Map.get(error_message, "data")), "0xd2377165"))
 
     if is_confidential do
-      Map.merge(token_balance, %{value: @confidential_magic_value, value_fetched_at: DateTime.utc_now(), error: nil})
+      Map.merge(token_balance, %{value: Indexer.Helper.confidential_magic_value(), value_fetched_at: DateTime.utc_now(), error: nil})
     else
       Map.merge(token_balance, %{value: nil, value_fetched_at: nil, error: error_message})
     end
