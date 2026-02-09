@@ -484,15 +484,13 @@ defmodule Indexer.Transform.TokenTransfers do
     end
   end
 
-  @confidential_magic_value 113_410_528_010_044_099_573_606_208_508_173_194_000_562_226_506_730_814_324_198_640_008_715_487_293_689
-
   defp parse_confidential_params(log) do
     # Topic 1: from, Topic 2: to
     from_address_hash = truncate_address_hash(log.second_topic)
     to_address_hash = truncate_address_hash(log.third_topic)
 
     token_transfer = %{
-      amount: @confidential_magic_value,
+      amount: Indexer.Helper.confidential_magic_value(),
       block_number: log.block_number,
       block_hash: log.block_hash,
       log_index: log.index,
