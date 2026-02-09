@@ -970,6 +970,26 @@ defmodule Explorer.Chain.Transaction do
     end
   end
 
+  defp do_decoded_input_data(<<0x57, 0x98, 0x3A, 0xC8, _::binary>> = data, _, _) do
+    with <<_method_id::binary-size(4), rlp_data::binary>> <- data,
+         [decrypted_args, plaintext_args] <- ExRLP.decode(rlp_data) do
+      decrypted_args = Enum.map(decrypted_args, &("0x" <> Base.encode16(&1, case: :lower)))
+      plaintext_args = Enum.map(plaintext_args, &("0x" <> Base.encode16(&1, case: :lower)))
+
+      mapping = [
+        {"decryptedArguments", "bytes[]", decrypted_args},
+        {"plaintextArguments", "bytes[]", plaintext_args}
+      ]
+
+      identifier = "57983ac8"
+      text = "onDecrypt(bytes[] decryptedArguments, bytes[] plaintextArguments)"
+      {:ok, identifier, text, mapping}
+    else
+      _ ->
+        {:error, :could_not_decode}
+    end
+  end
+
   defp do_decoded_input_data(data, full_abi, hash) do
     with {:ok, {selector, values}} <- find_and_decode(full_abi, data, hash),
          {:ok, mapping} <- selector_mapping(selector, values, hash),
