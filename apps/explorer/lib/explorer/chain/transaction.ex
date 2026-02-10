@@ -973,9 +973,6 @@ defmodule Explorer.Chain.Transaction do
   defp do_decoded_input_data(<<0x57, 0x98, 0x3A, 0xC8, _::binary>> = data, _, _) do
     with <<_method_id::binary-size(4), rlp_data::binary>> <- data,
          [decrypted_args, plaintext_args] <- ExRLP.decode(rlp_data) do
-      decrypted_args = Enum.map(decrypted_args, &("0x" <> Base.encode16(&1, case: :lower)))
-      plaintext_args = Enum.map(plaintext_args, &("0x" <> Base.encode16(&1, case: :lower)))
-
       mapping = [
         {"decryptedArguments", "bytes[]", decrypted_args},
         {"plaintextArguments", "bytes[]", plaintext_args}
