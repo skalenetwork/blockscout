@@ -619,6 +619,7 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
                :coin_transfer
                | :contract_call
                | :contract_creation
+               | :ctx
                | :rootstock_bridge
                | :rootstock_remasc
                | :token_creation
