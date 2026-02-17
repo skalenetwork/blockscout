@@ -649,6 +649,18 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
         types
       end
 
+    transaction_types(transaction, types, :ctx)
+  end
+
+  def transaction_types(transaction, types, :ctx) do
+    # CTX transaction type (method signature 0x57983ac8)
+    types =
+      if Transaction.ctx_transaction?(transaction) do
+        [:ctx | types]
+      else
+        types
+      end
+
     transaction_types(transaction, types, :token_transfer)
   end
 
