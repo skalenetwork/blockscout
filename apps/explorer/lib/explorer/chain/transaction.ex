@@ -1363,6 +1363,14 @@ defmodule Explorer.Chain.Transaction do
     end
   end
 
+  @doc """
+  Returns true if the transaction is a CTX transaction.
+  CTX transactions are identified by the method signature 0x57983ac8 in the first 4 bytes of input data.
+  """
+  @spec ctx_transaction?(Explorer.Chain.Transaction.t()) :: boolean
+  def ctx_transaction?(%__MODULE__{input: %{bytes: <<0x57, 0x98, 0x3A, 0xC8, _::binary>>}}), do: true
+  def ctx_transaction?(_), do: false
+
   def bytes_to_address_hash(bytes), do: %Hash{byte_count: 20, bytes: bytes}
 
   @doc """
