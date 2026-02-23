@@ -24,6 +24,12 @@ defmodule Indexer.Helper do
   @infinite_retries_number 100_000_000
   @block_check_interval_range_size 100
   @block_by_number_chunk_size 50
+  @confidential_magic_value 113_410_528_010_044_099_573_606_208_508_173_194_000_562_226_506_730_814_324_198_640_008_715_487_293_689
+
+  @doc """
+  Returns the magic value used to identify confidential token balances and transfers.
+  """
+  def confidential_magic_value, do: @confidential_magic_value
 
   @doc """
   Checks whether the given Ethereum address looks correct.

@@ -970,6 +970,23 @@ defmodule Explorer.Chain.Transaction do
     end
   end
 
+  defp do_decoded_input_data(<<0x57, 0x98, 0x3A, 0xC8, _::binary>> = data, _, _) do
+    with <<_method_id::binary-size(4), rlp_data::binary>> <- data,
+         [decrypted_args, plaintext_args] <- ExRLP.decode(rlp_data) do
+      mapping = [
+        {"decryptedArguments", "bytes[]", decrypted_args},
+        {"plaintextArguments", "bytes[]", plaintext_args}
+      ]
+
+      identifier = "57983ac8"
+      text = "onDecrypt(bytes[] decryptedArguments, bytes[] plaintextArguments)"
+      {:ok, identifier, text, mapping}
+    else
+      _ ->
+        {:error, :could_not_decode}
+    end
+  end
+
   defp do_decoded_input_data(data, full_abi, hash) do
     with {:ok, {selector, values}} <- find_and_decode(full_abi, data, hash),
          {:ok, mapping} <- selector_mapping(selector, values, hash),
@@ -1345,6 +1362,14 @@ defmodule Explorer.Chain.Transaction do
       _ -> false
     end
   end
+
+  @doc """
+  Returns true if the transaction is a CTX transaction.
+  CTX transactions are identified by the method signature 0x57983ac8 in the first 4 bytes of input data.
+  """
+  @spec ctx_transaction?(Explorer.Chain.Transaction.t()) :: boolean
+  def ctx_transaction?(%__MODULE__{input: %{bytes: <<0x57, 0x98, 0x3A, 0xC8, _::binary>>}}), do: true
+  def ctx_transaction?(_), do: false
 
   def bytes_to_address_hash(bytes), do: %Hash{byte_count: 20, bytes: bytes}
 

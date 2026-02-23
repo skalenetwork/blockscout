@@ -619,6 +619,7 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
                :coin_transfer
                | :contract_call
                | :contract_creation
+               | :ctx
                | :rootstock_bridge
                | :rootstock_remasc
                | :token_creation
@@ -644,6 +645,18 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
     types =
       if type == 3 do
         [:blob_transaction | types]
+      else
+        types
+      end
+
+    transaction_types(transaction, types, :ctx)
+  end
+
+  def transaction_types(transaction, types, :ctx) do
+    # CTX transaction type (method signature 0x57983ac8)
+    types =
+      if Transaction.ctx_transaction?(transaction) do
+        [:ctx | types]
       else
         types
       end
