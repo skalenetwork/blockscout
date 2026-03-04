@@ -22,6 +22,7 @@ defmodule Indexer.Block.Fetcher do
   alias Indexer.Fetcher.Arbitrum.MessagesToL2Matcher, as: ArbitrumMessagesToL2Matcher
   alias Indexer.Fetcher.Celo.EpochBlockOperations, as: CeloEpochBlockOperations
   alias Indexer.Fetcher.Celo.EpochLogs, as: CeloEpochLogs
+  alias Indexer.Fetcher.Skale.CtxOrigin, as: SkaleCtxOrigin
   alias Indexer.Fetcher.CoinBalance.Catchup, as: CoinBalanceCatchup
   alias Indexer.Fetcher.CoinBalance.Realtime, as: CoinBalanceRealtime
   alias Indexer.Fetcher.Filecoin.AddressInfo, as: FilecoinAddressInfo
@@ -289,6 +290,7 @@ defmodule Indexer.Block.Fetcher do
       })
 
       async_match_arbitrum_messages_to_l2(arbitrum_transactions_for_further_handling)
+      async_fetch_ctx_origins(blocks, state)
 
       result
     else
@@ -822,6 +824,39 @@ defmodule Indexer.Block.Fetcher do
 
   defp async_match_arbitrum_messages_to_l2(transactions_with_messages_from_l1) do
     ArbitrumMessagesToL2Matcher.async_discover_match(transactions_with_messages_from_l1)
+  end
+
+  # Fetches CTX origins for transactions using bite_getCtxOrigin RPC method.
+  @spec async_fetch_ctx_origins([map()], %__MODULE__{}) :: :ok
+  defp async_fetch_ctx_origins(blocks, %__MODULE__{json_rpc_named_arguments: json_rpc_named_arguments}) do
+    if Enum.empty?(blocks) do
+      :ok
+    else
+      # Get all unique block numbers that need CTX origin fetching
+      # For each block N being indexed, fetch CTX origins for transactions IN that block
+      # The bite_getCtxOrigin RPC will return the origin from block N-1 for any CTX transactions
+      blocks_to_process =
+        blocks
+        |> Enum.map(& &1.number)
+        |> Enum.sort()
+        |> Enum.uniq()
+
+      # Spawn tasks for each block - query transactions INSIDE the task to avoid blocking main process
+      Enum.each(blocks_to_process, fn block_number ->
+        Task.start(fn ->
+          transaction_hashes =
+            Chain.get_transactions_of_block_number(block_number)
+            |> Enum.map(& &1.hash)
+
+          if length(transaction_hashes) > 0 do
+            Logger.debug("Fetching CTX origins for #{length(transaction_hashes)} transactions in block #{block_number}")
+            SkaleCtxOrigin.fetch_and_update(transaction_hashes, json_rpc_named_arguments)
+          end
+        end)
+      end)
+
+      :ok
+    end
   end
 
   # workaround for cases when RPC send logs with same index within one block
