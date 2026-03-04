@@ -13,9 +13,11 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
   alias Explorer.Chain.Block.Reward
   alias Explorer.Chain.Transaction.StateChange
   alias Explorer.Counters.AverageBlockTime
+  alias Explorer.Repo
   alias Timex.Duration
 
   import BlockScoutWeb.Account.AuthController, only: [current_user: 1]
+  import Ecto.Query, only: [from: 2]
 
   @api_true [api?: true]
 
@@ -806,6 +808,31 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
     Map.merge(map, %{"change" => change})
   end
 
+  # Helper function to add CTX origin fields to transaction response (global feature)
+  defp add_ctx_fields(result, transaction) do
+    # Query for any CTX transaction that was derived from this transaction
+    derived_ctx_hash = get_derived_ctx_transaction_hash(transaction.hash)
+
+    result
+    |> Map.put("ctx_origin_transaction_hash", transaction.ctx_origin_transaction_hash)
+    |> Map.put("derived_ctx_transaction_hash", derived_ctx_hash)
+  end
+
+  # Helper function to find a CTX transaction derived from the given origin transaction
+  defp get_derived_ctx_transaction_hash(transaction_hash) do
+    query =
+      from(t in Transaction,
+        where: t.ctx_origin_transaction_hash == ^transaction_hash,
+        select: t.hash,
+        limit: 1
+      )
+
+    case Repo.one(query, timeout: :infinity) do
+      nil -> nil
+      hash -> hash
+    end
+  end
+
   case @chain_type do
     :polygon_edge ->
       defp chain_type_transformations(transactions) do
@@ -957,8 +984,8 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
         transactions
       end
 
-      defp chain_type_fields(result, _transaction, _single_transaction?, _conn, _watchlist_names) do
-        result
+      defp chain_type_fields(result, transaction, _single_transaction?, _conn, _watchlist_names) do
+        add_ctx_fields(result, transaction)
       end
   end
 end
