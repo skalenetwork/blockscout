@@ -510,8 +510,8 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
     end
   end
 
-  defp revert_reason(status, transaction) do
-    if is_binary(status) && status |> String.downcase() |> String.contains?("reverted") do
+  defp revert_reason(_status, transaction) do
+    if transaction.status == :error do
       case TransactionView.transaction_revert_reason(transaction, @api_true) do
         {:error, _contract_not_verified, candidates} when candidates != [] ->
           {:ok, method_id, text, mapping} = Enum.at(candidates, 0)
@@ -520,9 +520,16 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
         {:ok, method_id, text, mapping} ->
           render(__MODULE__, "decoded_input.json", method_id: method_id, text: text, mapping: mapping, error?: true)
 
+        {:error, :contract_not_verified, _} ->
+          nil
+
         _ ->
           hex = TransactionView.get_pure_transaction_revert_reason(transaction)
-          render(__MODULE__, "revert_reason.json", raw: hex)
+          if is_standard_revert_reason?(hex) do
+            render(__MODULE__, "revert_reason.json", raw: hex)
+          else
+            nil
+          end
       end
     end
   rescue
