@@ -537,6 +537,12 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
       nil
   end
 
+  defp is_standard_revert_reason?(hex) when is_binary(hex) do
+    String.starts_with?(hex, "0x08c379a0") || String.starts_with?(hex, "0x4e487b71")
+  end
+
+  defp is_standard_revert_reason?(_), do: false
+
   @doc """
     Prepares decoded transaction info
   """
