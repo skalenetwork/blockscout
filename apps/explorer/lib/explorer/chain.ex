@@ -120,6 +120,7 @@ defmodule Explorer.Chain do
   # Geth-like node
   @revert_msg_prefix_5 "execution reverted: "
   @revert_msg_prefix_6_empty "execution reverted"
+  @revert_msg_prefix_7_skale "EVM revert instruction without description message"
 
   @out_of_gas_msg "Out of gas"
 
