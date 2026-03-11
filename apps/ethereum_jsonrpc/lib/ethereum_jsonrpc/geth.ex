@@ -68,7 +68,7 @@ defmodule EthereumJSONRPC.Geth do
 
         {:ok, %EthereumJSONRPC.FetchedBeneficiaries{params_set: params_set, errors: []}}
 
-      {:error, error} = error_result ->
+      {:error, _error} = error_result ->
         error_result
     end
   end
