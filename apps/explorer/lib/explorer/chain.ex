@@ -3055,7 +3055,13 @@ defmodule Explorer.Chain do
           fetch_transaction_revert_reason_using_call(transaction)
       end
 
-    if !is_nil(revert_reason) do
+    should_save =
+      !is_nil(revert_reason) &&
+      revert_reason != "" &&
+      revert_reason != "0x" &&
+      revert_reason != @revert_msg_prefix_7_skale
+
+    if should_save do
       transaction
       |> Changeset.change(%{revert_reason: revert_reason})
       |> Repo.update()
