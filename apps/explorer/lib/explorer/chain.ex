@@ -3069,6 +3069,16 @@ defmodule Explorer.Chain do
 
     revert_reason
   end
+  defp is_generic_revert_output?(output) when is_binary(output) do
+    case output do
+      "0x" <> hex_part when byte_size(hex_part) < 8 ->
+        # Output too short to contain a function selector
+        true
+
+      _ ->
+        String.match?(output, ~r/^[^0-9a-fA-F]/) or output == "Reverted"
+    end
+  end
 
   defp fetch_transaction_revert_reason_using_call(%Transaction{
          block_number: block_number,
