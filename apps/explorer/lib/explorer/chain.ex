@@ -3032,7 +3032,17 @@ defmodule Explorer.Chain do
     revert_reason =
       case response do
         {:ok, first_trace_params} ->
-          first_trace_params |> Enum.at(0) |> Map.get(:output, %Data{bytes: <<>>}) |> to_string()
+          output = first_trace_params |> Enum.at(0) |> Map.get(:output, %Data{bytes: <<>>}) |> to_string()
+
+          if output in ["", "0x"] or is_generic_revert_output?(output) do
+            Logger.debug(fn ->
+              ["Trace returned generic revert for transaction: #{hash_string}, falling back to eth_call"]
+            end)
+
+            fetch_transaction_revert_reason_using_call(transaction)
+          else
+            output
+          end
 
         {:error, reason} ->
           Logger.error(fn ->
