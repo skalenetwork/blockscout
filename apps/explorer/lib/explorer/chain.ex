@@ -3187,6 +3187,9 @@ defmodule Explorer.Chain do
       @revert_msg_prefix_6_empty ->
         ""
 
+      @revert_msg_prefix_7_skale ->
+        nil
+
       _ ->
         nil
     end
