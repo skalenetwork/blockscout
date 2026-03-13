@@ -3069,6 +3069,7 @@ defmodule Explorer.Chain do
 
     revert_reason
   end
+
   defp is_generic_revert_output?(output) when is_binary(output) do
     case output do
       "0x" <> hex_part when byte_size(hex_part) < 8 ->
@@ -3079,6 +3080,8 @@ defmodule Explorer.Chain do
         String.match?(output, ~r/^[^0-9a-fA-F]/) or output == "Reverted"
     end
   end
+
+  defp is_generic_revert_output?(_), do: true
 
   defp fetch_transaction_revert_reason_using_call(%Transaction{
          block_number: block_number,
@@ -3131,6 +3134,13 @@ defmodule Explorer.Chain do
   Returns `nil` if the revert reason cannot be parsed or error format is unknown.
   """
   @spec parse_revert_reason_from_error(any()) :: String.t() | nil
+  def parse_revert_reason_from_error(%{data: data, message: message}) when is_binary(data) and is_binary(message) do
+    case format_revert_data(data) do
+      nil -> format_revert_reason_message(message)
+      formatted_data -> formatted_data
+    end
+  end
+
   def parse_revert_reason_from_error(%{data: data}), do: format_revert_data(data)
 
   def parse_revert_reason_from_error(%{message: message}), do: format_revert_reason_message(message)
