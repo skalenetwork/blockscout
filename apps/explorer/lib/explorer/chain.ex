@@ -3004,7 +3004,14 @@ defmodule Explorer.Chain do
   def transaction_to_revert_reason(transaction) do
     %Transaction{revert_reason: revert_reason} = transaction
 
-    if revert_reason == nil do
+    should_fetch =
+      revert_reason == nil ||
+      revert_reason == "" ||
+      revert_reason == "0x" ||
+      revert_reason == @revert_msg_prefix_7_skale ||  # SKALE's generic message
+      String.contains?(revert_reason || "", @revert_msg_prefix_7_skale)
+
+    if should_fetch do
       fetch_transaction_revert_reason(transaction)
     else
       revert_reason
