@@ -3080,7 +3080,6 @@ defmodule Explorer.Chain do
   defp is_generic_revert_output?(output) when is_binary(output) do
     case output do
       "0x" <> hex_part when byte_size(hex_part) < 8 ->
-        # Output too short to contain a function selector
         true
 
       _ ->
