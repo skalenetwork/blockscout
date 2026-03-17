@@ -3008,7 +3008,7 @@ defmodule Explorer.Chain do
       revert_reason == nil ||
       revert_reason == "" ||
       revert_reason == "0x" ||
-      revert_reason == @revert_msg_prefix_7_skale ||  # SKALE's generic message
+      revert_reason == @revert_msg_prefix_7_skale ||
       String.contains?(revert_reason || "", @revert_msg_prefix_7_skale)
 
     if should_fetch do
