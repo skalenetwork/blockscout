@@ -122,6 +122,8 @@ defmodule Explorer.Chain do
   @revert_msg_prefix_6_empty "execution reverted"
   @revert_msg_prefix_7_skale "EVM revert instruction without description message"
 
+  @burn_address_hash_str "0x0000000000000000000000000000000000000000"
+
   @out_of_gas_msg "Out of gas"
 
   @limit_showing_transactions 10_000
