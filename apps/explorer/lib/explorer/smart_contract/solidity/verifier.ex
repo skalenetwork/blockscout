@@ -495,12 +495,11 @@ defmodule Explorer.SmartContract.Solidity.Verifier do
     end
   end
 
-  # Experimental/unfinished function - commented out due to undefined ConstructorArguments module
-  # defp try_to_verify_with_unknown_constructor_args(creation_code, generated_bytecode, trimmed_bytecode, abi) do
-  #   ["", rest_blockchain] = String.split(creation_code, trimmed_bytecode)
-  #   ["", rest_generated] = String.split(generated_bytecode, trimmed_bytecode)
-  #   ConstructorArguments.experimental_find_constructor_args(rest_blockchain, rest_generated, abi)
-  # end
+  defp try_to_verify_with_unknown_constructor_args(creation_code, generated_bytecode, trimmed_bytecode, abi) do
+    ["", rest_blockchain] = String.split(creation_code, trimmed_bytecode)
+    ["", rest_generated] = String.split(generated_bytecode, trimmed_bytecode)
+    ConstructorArguments.experimental_find_constructor_args(rest_blockchain, rest_generated, abi)
+  end
 
   # 730000000000000000000000000000000000000000 - default library address that returned by the compiler
   defp try_library_verification(
