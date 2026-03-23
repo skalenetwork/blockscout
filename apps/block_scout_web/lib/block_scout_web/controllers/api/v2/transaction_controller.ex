@@ -47,6 +47,7 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
   alias Explorer.Chain.PolygonZkevm.Reader, as: PolygonZkevmReader
   alias Explorer.Chain.Scroll.Reader, as: ScrollReader
   alias Explorer.Chain.ZkSync.Reader, as: ZkSyncReader
+  alias Explorer.Chain.Skale.CraftedCtx
   alias Explorer.Counters.{FreshPendingTransactionsCounter, Transactions24hStats}
   alias Indexer.Fetcher.OnDemand.FirstTrace, as: FirstTraceOnDemand
 
@@ -644,6 +645,22 @@ defmodule BlockScoutWeb.API.V2.TransactionController do
       |> put_status(200)
       |> put_view(BlobView)
       |> render(:blobs, %{blobs: blobs})
+    end
+  end
+
+  @doc """
+    Function to handle GET requests to `/api/v2/transactions/:transaction_hash_param/crafted-ctxs` endpoint.
+
+    Returns the list of derived CTX transaction hashes that were crafted by the given origin transaction.
+  """
+  @spec crafted_ctxs(Plug.Conn.t(), map()) :: Plug.Conn.t() | {atom(), any()}
+  def crafted_ctxs(conn, %{"transaction_hash_param" => transaction_hash_string} = params) do
+    with {:ok, _transaction, transaction_hash} <- validate_transaction(transaction_hash_string, params) do
+      derived_hashes = CraftedCtx.for_origin(transaction_hash)
+
+      conn
+      |> put_status(200)
+      |> render(:crafted_ctxs, %{crafted_ctxs: derived_hashes})
     end
   end
 
