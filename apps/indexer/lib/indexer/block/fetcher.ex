@@ -23,6 +23,7 @@ defmodule Indexer.Block.Fetcher do
   alias Indexer.Fetcher.Celo.EpochBlockOperations, as: CeloEpochBlockOperations
   alias Indexer.Fetcher.Celo.EpochLogs, as: CeloEpochLogs
   alias Indexer.Fetcher.Skale.CtxOrigin, as: SkaleCtxOrigin
+  alias Indexer.Fetcher.Skale.CraftedCtxs, as: SkaleCraftedCtxs
   alias Indexer.Fetcher.CoinBalance.Catchup, as: CoinBalanceCatchup
   alias Indexer.Fetcher.CoinBalance.Realtime, as: CoinBalanceRealtime
   alias Indexer.Fetcher.Filecoin.AddressInfo, as: FilecoinAddressInfo
@@ -291,6 +292,7 @@ defmodule Indexer.Block.Fetcher do
 
       async_match_arbitrum_messages_to_l2(arbitrum_transactions_for_further_handling)
       async_fetch_ctx_origins(blocks, state)
+      async_fetch_crafted_ctxs(blocks, state)
 
       result
     else
