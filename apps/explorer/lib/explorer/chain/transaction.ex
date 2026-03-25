@@ -1133,8 +1133,6 @@ defmodule Explorer.Chain.Transaction do
   defp selector_mapping(selector, values, hash) do
     types = Enum.map(selector.types, &FunctionSelector.encode_type/1)
 
-    # Validate that values is a proper list before attempting to zip
-    # ExRLP.decode and other decoders can return improper lists
     with true <- is_list(values),
          true <- proper_list?(values) do
       mapping = Enum.zip([selector.input_names, types, values])
@@ -1163,24 +1161,18 @@ defmodule Explorer.Chain.Transaction do
       {:error, :could_not_decode}
   end
 
-  # Check if a list is a proper list (ends with []) rather than an improper list (ends with non-list)
   defp proper_list?([]), do: true
   defp proper_list?([_ | tail]) when is_list(tail), do: proper_list?(tail)
   defp proper_list?(_), do: false
 
-  # Convert an improper list to a proper list by flattening the tail
-  # If the value is already a proper list or not a list, return as-is
   defp normalize_to_proper_list(value) when is_list(value) do
     if proper_list?(value) do
-      # Recursively normalize nested lists
       Enum.map(value, &normalize_to_proper_list/1)
     else
-      # Convert improper list to proper list
       try do
         :lists.reverse(value) |> :lists.reverse()
       rescue
         _ ->
-          # If reverse fails, try to collect all elements manually
           collect_list_elements(value, [])
       end
     end
@@ -1188,13 +1180,11 @@ defmodule Explorer.Chain.Transaction do
 
   defp normalize_to_proper_list(value), do: value
 
-  # Helper to collect all elements from an improper list
   defp collect_list_elements([], acc), do: :lists.reverse(acc)
   defp collect_list_elements([head | tail], acc) when is_list(tail) do
     collect_list_elements(tail, [head | acc])
   end
   defp collect_list_elements([head | tail], acc) do
-    # Improper list detected, include tail as final element
     :lists.reverse([tail, head | acc])
   end
   defp collect_list_elements(value, acc), do: :lists.reverse([value | acc])
