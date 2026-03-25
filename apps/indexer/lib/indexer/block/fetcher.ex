@@ -861,6 +861,41 @@ defmodule Indexer.Block.Fetcher do
     end
   end
 
+  # Fetches crafted (derived) CTX hashes for transactions in block N-1 using bite_getCraftedCtxs.
+  # Called when indexing block N — by then the derived CTXs in block N already exist in the node.
+  @spec async_fetch_crafted_ctxs([map()], %__MODULE__{}) :: :ok
+  defp async_fetch_crafted_ctxs(blocks, %__MODULE__{json_rpc_named_arguments: json_rpc_named_arguments}) do
+    if Enum.empty?(blocks) do
+      :ok
+    else
+      blocks
+      |> Enum.map(& &1.number)
+      |> Enum.sort()
+      |> Enum.uniq()
+      |> Enum.each(fn block_number ->
+        prev_block = block_number - 1
+
+        if prev_block >= 0 do
+          Task.start(fn ->
+            transaction_hashes =
+              Chain.get_transactions_of_block_number(prev_block)
+              |> Enum.map(& &1.hash)
+
+            if length(transaction_hashes) > 0 do
+              Logger.debug(
+                "Fetching crafted CTXs for #{length(transaction_hashes)} transactions in block #{prev_block}"
+              )
+
+              SkaleCraftedCtxs.fetch_and_update(transaction_hashes, json_rpc_named_arguments)
+            end
+          end)
+        end
+      end)
+
+      :ok
+    end
+  end
+
   # workaround for cases when RPC send logs with same index within one block
   defp maybe_set_new_log_index(logs) do
     logs
