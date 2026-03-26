@@ -61,5 +61,13 @@ defmodule Indexer.Fetcher.Skale.CraftedCtxs do
     end
   end
 
- 
+  # Build RPC requests for bite_getCraftedCtxs
+  @spec build_requests([Hash.Full.t()]) :: [EthereumJSONRPC.Transport.request()]
+  defp build_requests(transaction_hashes) do
+    transaction_hashes
+    |> Enum.with_index()
+    |> Enum.map(fn {hash, index} ->
+      Rpc.crafted_ctxs_request(hash, index)
+    end)
+  end
 end
