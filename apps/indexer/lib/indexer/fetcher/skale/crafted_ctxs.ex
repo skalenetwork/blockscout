@@ -70,4 +70,43 @@ defmodule Indexer.Fetcher.Skale.CraftedCtxs do
       Rpc.crafted_ctxs_request(hash, index)
     end)
   end
+
+  # Process batch responses and insert associations into the database
+  @spec process_responses({:ok, [map()]} | {:error, term()}, [Hash.Full.t()]) :: :ok
+  defp process_responses({:ok, responses}, transaction_hashes) do
+    now = DateTime.utc_now()
+
+    rows =
+      responses
+      |> Enum.flat_map(fn response ->
+        case response do
+          %{id: id, result: derived_hashes} when is_list(derived_hashes) and length(derived_hashes) > 0 ->
+            origin_hash = Enum.at(transaction_hashes, id)
+            build_rows(origin_hash, derived_hashes, now)
+
+          %{id: _id, error: %{message: message}} ->
+            # Expected for transactions that are not CTX origins
+            Logger.debug("No crafted CTXs for transaction: #{message}")
+            []
+
+          _other ->
+            []
+        end
+      end)
+
+    if length(rows) > 0 do
+      Repo.insert_all(
+        CraftedCtx,
+        rows,
+        conflict_target: [:origin_transaction_hash, :derived_transaction_hash],
+        on_conflict: :nothing
+      )
+
+      Logger.info("Inserted #{length(rows)} crafted CTX associations")
+    else
+      Logger.debug("No crafted CTXs found in batch (expected — most transactions are not CTX origins)")
+    end
+
+    :ok
+  end
 end
