@@ -109,4 +109,37 @@ defmodule Indexer.Fetcher.Skale.CraftedCtxs do
 
     :ok
   end
+
+  defp process_responses({:error, reason}, _transaction_hashes) do
+    Logger.error("Failed to fetch crafted CTXs: #{inspect(reason)}")
+    :ok
+  end
+
+  # Build row maps for insert_all from a list of derived hash hex strings
+  @spec build_rows(Hash.Full.t(), [binary()], DateTime.t()) :: [map()]
+  defp build_rows(origin_hash, derived_hashes, now) do
+    derived_hashes
+    |> Enum.reduce([], fn derived_hex, acc ->
+      # SKALE RPC returns hashes without "0x" prefix
+      derived_hex_normalized =
+        if String.starts_with?(derived_hex, "0x"), do: derived_hex, else: "0x" <> derived_hex
+
+      case Hash.Full.cast(derived_hex_normalized) do
+        {:ok, derived_hash} ->
+          [
+            %{
+              origin_transaction_hash: origin_hash,
+              derived_transaction_hash: derived_hash,
+              inserted_at: now,
+              updated_at: now
+            }
+            | acc
+          ]
+
+        _error ->
+          Logger.debug("Failed to cast derived CTX hash: #{derived_hex_normalized}")
+          acc
+      end
+    end)
+  end
 end
