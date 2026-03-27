@@ -39,4 +39,37 @@ defmodule Indexer.Fetcher.Skale.Utils.Rpc do
   def ctx_origin_request(%Hash{byte_count: 32} = transaction_hash, id) do
     ctx_origin_request(Hash.to_string(transaction_hash), id)
   end
+
+  @doc """
+  Creates a bite_getCraftedCtxs RPC request.
+
+  ## Parameters
+  - `transaction_hash`: The origin transaction hash to query (binary or Hash.Full.t())
+  - `id`: The JSON-RPC request ID
+
+  ## Returns
+  A JSON-RPC request map for the bite_getCraftedCtxs method.
+
+  ## Example
+      iex> crafted_ctxs_request("0x4dbbbe90dc0d470da288964ca7d59a163698a1b6d4eb62c0c9b35087e31e7d33", 1)
+      %{
+        id: 1,
+        jsonrpc: "2.0",
+        method: "bite_getCraftedCtxs",
+        params: ["0x4dbbbe90dc0d470da288964ca7d59a163698a1b6d4eb62c0c9b35087e31e7d33"]
+      }
+  """
+  @spec crafted_ctxs_request(binary() | Hash.Full.t(), non_neg_integer()) ::
+          EthereumJSONRPC.Transport.request()
+  def crafted_ctxs_request(transaction_hash, id) when is_binary(transaction_hash) do
+    request(%{
+      id: id,
+      method: "bite_getCraftedCtxs",
+      params: [transaction_hash]
+    })
+  end
+
+  def crafted_ctxs_request(%Hash{byte_count: 32} = transaction_hash, id) do
+    crafted_ctxs_request(Hash.to_string(transaction_hash), id)
+  end
 end
