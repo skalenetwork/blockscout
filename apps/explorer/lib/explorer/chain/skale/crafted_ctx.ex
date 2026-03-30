@@ -1,6 +1,6 @@
 defmodule Explorer.Chain.Skale.CraftedCtx do
   @moduledoc """
-  Schema for SKALE crafted (derived) CTX associations.
+  Schema for SKALE crafted CTX associations.
 
   Stores the relationship between an origin transaction and the CTX transactions
   it caused to be crafted and executed in the next block.
@@ -15,12 +15,12 @@ defmodule Explorer.Chain.Skale.CraftedCtx do
   alias Explorer.Chain.Hash
   alias Explorer.Repo
 
-  @required_attrs ~w(origin_transaction_hash derived_transaction_hash)a
+  @required_attrs ~w(origin_transaction_hash crafted_transaction_hash)a
 
   @primary_key false
   typed_schema "skale_crafted_ctxs" do
     field(:origin_transaction_hash, Hash.Full, primary_key: true)
-    field(:derived_transaction_hash, Hash.Full, primary_key: true)
+    field(:crafted_transaction_hash, Hash.Full, primary_key: true)
 
     timestamps()
   end
@@ -32,15 +32,15 @@ defmodule Explorer.Chain.Skale.CraftedCtx do
   end
 
   @doc """
-  Returns all crafted CTX hashes derived from the given origin transaction hash.
+  Returns all crafted CTX hashes for the given origin transaction hash.
   """
   @spec for_origin(Hash.Full.t()) :: [Hash.Full.t()]
   def for_origin(origin_hash) do
     query =
       from(c in __MODULE__,
         where: c.origin_transaction_hash == ^origin_hash,
-        select: c.derived_transaction_hash,
-        order_by: c.derived_transaction_hash
+        select: c.crafted_transaction_hash,
+        order_by: c.crafted_transaction_hash
       )
 
     Repo.all(query)
