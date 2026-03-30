@@ -1,13 +1,13 @@
 defmodule Indexer.Fetcher.Skale.CraftedCtxs do
   @moduledoc """
-  Fetches derived CTX transaction hashes for SKALE origin transactions
+  Fetches crafted CTX transaction hashes for SKALE origin transactions
   using the bite_getCraftedCtxs RPC method.
 
   ## Timing Strategy
 
   When block N is indexed, this fetcher is called for transactions in block N-1.
   Since CTX transactions are spawned in block N by smart contracts in block N-1,
-  waiting until block N is indexed ensures the derived CTXs already exist in the
+  waiting until block N is indexed ensures the crafted CTXs already exist in the
   node before querying. This avoids any premature calls.
 
   ## RPC Response Format
@@ -80,9 +80,9 @@ defmodule Indexer.Fetcher.Skale.CraftedCtxs do
       responses
       |> Enum.flat_map(fn response ->
         case response do
-          %{id: id, result: derived_hashes} when is_list(derived_hashes) and length(derived_hashes) > 0 ->
+          %{id: id, result: crafted_hashes} when is_list(crafted_hashes) and length(crafted_hashes) > 0 ->
             origin_hash = Enum.at(transaction_hashes, id)
-            build_rows(origin_hash, derived_hashes, now)
+            build_rows(origin_hash, crafted_hashes, now)
 
           %{id: _id, error: %{message: message}} ->
             # Expected for transactions that are not CTX origins
@@ -98,7 +98,7 @@ defmodule Indexer.Fetcher.Skale.CraftedCtxs do
       Repo.insert_all(
         CraftedCtx,
         rows,
-        conflict_target: [:origin_transaction_hash, :derived_transaction_hash],
+          conflict_target: [:origin_transaction_hash, :crafted_transaction_hash],
         on_conflict: :nothing
       )
 
@@ -115,21 +115,21 @@ defmodule Indexer.Fetcher.Skale.CraftedCtxs do
     :ok
   end
 
-  # Build row maps for insert_all from a list of derived hash hex strings
+  # Build row maps for insert_all from a list of crafted CTX hash hex strings
   @spec build_rows(Hash.Full.t(), [binary()], DateTime.t()) :: [map()]
-  defp build_rows(origin_hash, derived_hashes, now) do
-    derived_hashes
-    |> Enum.reduce([], fn derived_hex, acc ->
+  defp build_rows(origin_hash, crafted_hashes, now) do
+    crafted_hashes
+    |> Enum.reduce([], fn crafted_hex, acc ->
       # SKALE RPC returns hashes without "0x" prefix
-      derived_hex_normalized =
-        if String.starts_with?(derived_hex, "0x"), do: derived_hex, else: "0x" <> derived_hex
+      crafted_hex_normalized =
+        if String.starts_with?(crafted_hex, "0x"), do: crafted_hex, else: "0x" <> crafted_hex
 
-      case Hash.Full.cast(derived_hex_normalized) do
-        {:ok, derived_hash} ->
+      case Hash.Full.cast(crafted_hex_normalized) do
+        {:ok, crafted_hash} ->
           [
             %{
               origin_transaction_hash: origin_hash,
-              derived_transaction_hash: derived_hash,
+              crafted_transaction_hash: crafted_hash,
               inserted_at: now,
               updated_at: now
             }
@@ -137,7 +137,7 @@ defmodule Indexer.Fetcher.Skale.CraftedCtxs do
           ]
 
         _error ->
-          Logger.debug("Failed to cast derived CTX hash: #{derived_hex_normalized}")
+          Logger.debug("Failed to cast crafted CTX hash: #{crafted_hex_normalized}")
           acc
       end
     end)
