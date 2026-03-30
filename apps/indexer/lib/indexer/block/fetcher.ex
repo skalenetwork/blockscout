@@ -861,8 +861,8 @@ defmodule Indexer.Block.Fetcher do
     end
   end
 
-  # Fetches crafted (derived) CTX hashes for transactions in block N-1 using bite_getCraftedCtxs.
-  # Called when indexing block N — by then the derived CTXs in block N already exist in the node.
+  # Fetches crafted CTX hashes for transactions in block N-1 using bite_getCraftedCtxs.
+  # Called when indexing block N — by then the crafted CTXs in block N already exist in the node.
   @spec async_fetch_crafted_ctxs([map()], %__MODULE__{}) :: :ok
   defp async_fetch_crafted_ctxs(blocks, %__MODULE__{json_rpc_named_arguments: json_rpc_named_arguments}) do
     if Enum.empty?(blocks) do
