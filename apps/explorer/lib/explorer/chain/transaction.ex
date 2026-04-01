@@ -196,7 +196,21 @@ defmodule Explorer.Chain.Transaction.Schema do
                           )
 
                         _ ->
-                          []
+                          elem(
+                            quote do
+                              # CTX origin tracking (global feature)
+                              field(:ctx_origin_transaction_hash, Hash.Full)
+                              belongs_to(
+                                :ctx_origin_transaction,
+                                Transaction,
+                                foreign_key: :ctx_origin_transaction_hash,
+                                references: :hash,
+                                type: Hash.Full,
+                                define_field: false
+                              )
+                            end,
+                            2
+                          )
                       end)
 
   defmacro generate do
