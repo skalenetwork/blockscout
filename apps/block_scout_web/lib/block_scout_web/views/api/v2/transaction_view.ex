@@ -13,6 +13,7 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
   alias Explorer.Chain.Block.Reward
   alias Explorer.Chain.Transaction.StateChange
   alias Explorer.Counters.AverageBlockTime
+  alias Explorer.Chain.Skale.CraftedCtx
   alias Timex.Duration
 
   import BlockScoutWeb.Account.AuthController, only: [current_user: 1]
@@ -199,6 +200,15 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
     %{
       "items" => Enum.map(state_changes, &prepare_state_change(&1)),
       "next_page_params" => next_page_params
+    }
+  end
+
+  def render("crafted_ctxs.json", %{crafted_ctxs: crafted_ctxs}) do
+    %{
+      "items" =>
+        Enum.map(crafted_ctxs, fn hash ->
+          %{"hash" => hash}
+        end)
     }
   end
 
@@ -970,8 +980,10 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
         transactions
       end
 
-      defp chain_type_fields(result, _transaction, _single_transaction?, _conn, _watchlist_names) do
+      defp chain_type_fields(result, transaction, single_transaction?, _conn, _watchlist_names) do
         result
+        |> Map.put("ctx_origin_transaction_hash", transaction.ctx_origin_transaction_hash)
+        |> Map.put("has_crafted_ctxs", single_transaction? && CraftedCtx.exists_for_origin?(transaction.hash))
       end
   end
 end
