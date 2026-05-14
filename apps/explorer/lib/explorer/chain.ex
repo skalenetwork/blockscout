@@ -120,8 +120,10 @@ defmodule Explorer.Chain do
   # Geth-like node
   @revert_msg_prefix_5 "execution reverted: "
   @revert_msg_prefix_6_empty "execution reverted"
+  @revert_msg_prefix_7_skale "EVM revert instruction without description message"
 
   @burn_address_hash_str "0x0000000000000000000000000000000000000000"
+
   @out_of_gas_msg "Out of gas"
 
   @limit_showing_transactions 10_000
@@ -3004,7 +3006,14 @@ defmodule Explorer.Chain do
   def transaction_to_revert_reason(transaction) do
     %Transaction{revert_reason: revert_reason} = transaction
 
-    if revert_reason == nil do
+    should_fetch =
+      revert_reason == nil ||
+      revert_reason == "" ||
+      revert_reason == "0x" ||
+      revert_reason == @revert_msg_prefix_7_skale ||
+      String.contains?(revert_reason || "", @revert_msg_prefix_7_skale)
+
+    if should_fetch do
       fetch_transaction_revert_reason(transaction)
     else
       revert_reason
@@ -3032,7 +3041,17 @@ defmodule Explorer.Chain do
     revert_reason =
       case response do
         {:ok, first_trace_params} ->
-          first_trace_params |> Enum.at(0) |> Map.get(:output, %Data{bytes: <<>>}) |> to_string()
+          output = first_trace_params |> Enum.at(0) |> Map.get(:output, %Data{bytes: <<>>}) |> to_string()
+
+          if output in ["", "0x"] or is_generic_revert_output?(output) do
+            Logger.debug(fn ->
+              ["Trace returned generic revert for transaction: #{hash_string}, falling back to eth_call"]
+            end)
+
+            fetch_transaction_revert_reason_using_call(transaction)
+          else
+            output
+          end
 
         {:error, reason} ->
           Logger.error(fn ->
@@ -3045,7 +3064,13 @@ defmodule Explorer.Chain do
           fetch_transaction_revert_reason_using_call(transaction)
       end
 
-    if !is_nil(revert_reason) do
+    should_save =
+      !is_nil(revert_reason) &&
+      revert_reason != "" &&
+      revert_reason != "0x" &&
+      revert_reason != @revert_msg_prefix_7_skale
+
+    if should_save do
       transaction
       |> Changeset.change(%{revert_reason: revert_reason})
       |> Repo.update()
@@ -3053,6 +3078,18 @@ defmodule Explorer.Chain do
 
     revert_reason
   end
+
+  defp is_generic_revert_output?(output) when is_binary(output) do
+    case output do
+      "0x" <> hex_part when byte_size(hex_part) < 8 ->
+        true
+
+      _ ->
+        String.match?(output, ~r/^[^0-9a-fA-F]/) or output == "Reverted"
+    end
+  end
+
+  defp is_generic_revert_output?(_), do: true
 
   defp fetch_transaction_revert_reason_using_call(%Transaction{
          block_number: block_number,
@@ -3105,6 +3142,13 @@ defmodule Explorer.Chain do
   Returns `nil` if the revert reason cannot be parsed or error format is unknown.
   """
   @spec parse_revert_reason_from_error(any()) :: String.t() | nil
+  def parse_revert_reason_from_error(%{data: data, message: message}) when is_binary(data) and is_binary(message) do
+    case format_revert_data(data) do
+      nil -> format_revert_reason_message(message)
+      formatted_data -> formatted_data
+    end
+  end
+
   def parse_revert_reason_from_error(%{data: data}), do: format_revert_data(data)
 
   def parse_revert_reason_from_error(%{message: message}), do: format_revert_reason_message(message)
@@ -3143,6 +3187,9 @@ defmodule Explorer.Chain do
 
       @revert_msg_prefix_6_empty ->
         ""
+
+      @revert_msg_prefix_7_skale ->
+        nil
 
       _ ->
         nil
