@@ -13,6 +13,7 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
   alias Explorer.Chain.Block.Reward
   alias Explorer.Chain.Transaction.StateChange
   alias Explorer.Counters.AverageBlockTime
+  alias Explorer.Chain.Skale.CraftedCtx
   alias Timex.Duration
 
   import BlockScoutWeb.Account.AuthController, only: [current_user: 1]
@@ -199,6 +200,15 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
     %{
       "items" => Enum.map(state_changes, &prepare_state_change(&1)),
       "next_page_params" => next_page_params
+    }
+  end
+
+  def render("crafted_ctxs.json", %{crafted_ctxs: crafted_ctxs}) do
+    %{
+      "items" =>
+        Enum.map(crafted_ctxs, fn hash ->
+          %{"hash" => hash}
+        end)
     }
   end
 
@@ -510,8 +520,8 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
     end
   end
 
-  defp revert_reason(status, transaction) do
-    if is_binary(status) && status |> String.downcase() |> String.contains?("reverted") do
+  defp revert_reason(_status, transaction) do
+    if transaction.status == :error do
       case TransactionView.transaction_revert_reason(transaction, @api_true) do
         {:error, _contract_not_verified, candidates} when candidates != [] ->
           {:ok, method_id, text, mapping} = Enum.at(candidates, 0)
@@ -520,15 +530,28 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
         {:ok, method_id, text, mapping} ->
           render(__MODULE__, "decoded_input.json", method_id: method_id, text: text, mapping: mapping, error?: true)
 
+        {:error, :contract_not_verified, _} ->
+          nil
+
         _ ->
           hex = TransactionView.get_pure_transaction_revert_reason(transaction)
-          render(__MODULE__, "revert_reason.json", raw: hex)
+          if is_standard_revert_reason?(hex) do
+            render(__MODULE__, "revert_reason.json", raw: hex)
+          else
+            nil
+          end
       end
     end
   rescue
     _ ->
       nil
   end
+
+  defp is_standard_revert_reason?(hex) when is_binary(hex) do
+    String.starts_with?(hex, "0x08c379a0") || String.starts_with?(hex, "0x4e487b71")
+  end
+
+  defp is_standard_revert_reason?(_), do: false
 
   @doc """
     Prepares decoded transaction info
@@ -619,6 +642,7 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
                :coin_transfer
                | :contract_call
                | :contract_creation
+               | :ctx
                | :rootstock_bridge
                | :rootstock_remasc
                | :token_creation
@@ -644,6 +668,18 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
     types =
       if type == 3 do
         [:blob_transaction | types]
+      else
+        types
+      end
+
+    transaction_types(transaction, types, :ctx)
+  end
+
+  def transaction_types(transaction, types, :ctx) do
+    # CTX transaction type (method signature 0x57983ac8)
+    types =
+      if Transaction.ctx_transaction?(transaction) do
+        [:ctx | types]
       else
         types
       end
@@ -944,8 +980,10 @@ defmodule BlockScoutWeb.API.V2.TransactionView do
         transactions
       end
 
-      defp chain_type_fields(result, _transaction, _single_transaction?, _conn, _watchlist_names) do
+      defp chain_type_fields(result, transaction, single_transaction?, _conn, _watchlist_names) do
         result
+        |> Map.put("ctx_origin_transaction_hash", transaction.ctx_origin_transaction_hash)
+        |> Map.put("has_crafted_ctxs", single_transaction? && CraftedCtx.exists_for_origin?(transaction.hash))
       end
   end
 end

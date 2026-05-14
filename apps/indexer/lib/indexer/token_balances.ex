@@ -114,7 +114,15 @@ defmodule Indexer.TokenBalances do
   end
 
   defp set_token_balance_value({:error, error_message}, token_balance) do
-    Map.merge(token_balance, %{value: nil, value_fetched_at: nil, error: error_message})
+    is_confidential =
+      (is_binary(error_message) and String.contains?(String.downcase(error_message), "0xd2377165")) ||
+      (is_map(error_message) and Map.get(error_message, "data") && String.contains?(String.downcase(Map.get(error_message, "data")), "0xd2377165"))
+
+    if is_confidential do
+      Map.merge(token_balance, %{value: Indexer.Helper.confidential_magic_value(), value_fetched_at: DateTime.utc_now(), error: nil})
+    else
+      Map.merge(token_balance, %{value: nil, value_fetched_at: nil, error: error_message})
+    end
   end
 
   defp ignore_request_with_errors(%{value: nil, value_fetched_at: nil, error: _error}), do: false
