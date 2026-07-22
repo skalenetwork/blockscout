@@ -985,16 +985,35 @@ defmodule Explorer.Chain.Transaction do
   end
 
   defp do_decoded_input_data(<<0x57, 0x98, 0x3A, 0xC8, _::binary>> = data, _, _) do
-    with <<_method_id::binary-size(4), rlp_data::binary>> <- data,
-         [decrypted_args, plaintext_args] <- ExRLP.decode(rlp_data) do
-      mapping = [
-        {"decryptedArguments", "bytes[]", decrypted_args},
-        {"plaintextArguments", "bytes[]", plaintext_args}
-      ]
+    with <<_method_id::binary-size(4), rlp_data::binary>> <- data do
+      try do
+        decoded = ExRLP.decode(rlp_data)
 
-      identifier = "57983ac8"
-      text = "onDecrypt(bytes[] decryptedArguments, bytes[] plaintextArguments)"
-      {:ok, identifier, text, mapping}
+        with true <- is_list(decoded),
+             true <- proper_list?(decoded),
+             true <- length(decoded) >= 2 do
+          decrypted_args = :erlang.hd(decoded)
+          plaintext_args = decoded |> :erlang.tl() |> :erlang.hd()
+
+          decrypted_args = normalize_to_proper_list(decrypted_args)
+          plaintext_args = normalize_to_proper_list(plaintext_args)
+
+          mapping = [
+            {"decryptedArguments", "bytes[]", decrypted_args},
+            {"plaintextArguments", "bytes[]", plaintext_args}
+          ]
+
+          identifier = "57983ac8"
+          text = "onDecrypt(bytes[] decryptedArguments, bytes[] plaintextArguments)"
+          {:ok, identifier, text, mapping}
+        else
+          _ ->
+            {:error, :could_not_decode}
+        end
+      rescue
+        _ ->
+          {:error, :could_not_decode}
+      end
     else
       _ ->
         {:error, :could_not_decode}
@@ -1128,9 +1147,21 @@ defmodule Explorer.Chain.Transaction do
   defp selector_mapping(selector, values, hash) do
     types = Enum.map(selector.types, &FunctionSelector.encode_type/1)
 
-    mapping = Enum.zip([selector.input_names, types, values])
+    with true <- is_list(values),
+         true <- proper_list?(values) do
+      mapping = Enum.zip([selector.input_names, types, values])
+      {:ok, mapping}
+    else
+      _ ->
+        Logger.warning(fn ->
+          [
+            "Could not decode input data for transaction (improper list detected): ",
+            Hash.to_iodata(hash)
+          ]
+        end)
 
-    {:ok, mapping}
+        {:error, :could_not_decode}
+    end
   rescue
     e ->
       Logger.warning(fn ->
@@ -1143,6 +1174,34 @@ defmodule Explorer.Chain.Transaction do
 
       {:error, :could_not_decode}
   end
+
+  defp proper_list?([]), do: true
+  defp proper_list?([_ | tail]) when is_list(tail), do: proper_list?(tail)
+  defp proper_list?(_), do: false
+
+  defp normalize_to_proper_list(value) when is_list(value) do
+    if proper_list?(value) do
+      Enum.map(value, &normalize_to_proper_list/1)
+    else
+      try do
+        :lists.reverse(value) |> :lists.reverse()
+      rescue
+        _ ->
+          collect_list_elements(value, [])
+      end
+    end
+  end
+
+  defp normalize_to_proper_list(value), do: value
+
+  defp collect_list_elements([], acc), do: :lists.reverse(acc)
+  defp collect_list_elements([head | tail], acc) when is_list(tail) do
+    collect_list_elements(tail, [head | acc])
+  end
+  defp collect_list_elements([head | tail], acc) do
+    :lists.reverse([tail, head | acc])
+  end
+  defp collect_list_elements(value, acc), do: :lists.reverse([value | acc])
 
   @doc """
   Produces a list of queries starting from the given one and adding filters for
